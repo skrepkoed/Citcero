@@ -1,0 +1,61 @@
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Citcero.Resources.ViewModels"
+             x:Class="Citcero.Resources.Views.BooksView">
+
+    <ContentPage.BindingContext>
+        <vm:BooksViewModel />
+    </ContentPage.BindingContext>
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Add from PDF"
+                 Command="{Binding AddBookFromPdfCommand}" />
+    </ContentPage.ToolbarItems>
+
+    <VerticalStackLayout Padding="10">
+        <!-- Кнопка для добавления новой книги -->
+        <Button Text="Add Book" Command="{Binding AddBookCommand}" />
+
+        <!-- Список книг -->
+        <CollectionView ItemsSource="{Binding Books}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Border Padding="10" Margin="5" BackgroundColor="WhiteSmoke">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <!-- Поле для ввода названия книги -->
+                            <Entry Grid.Row="0" Text="{Binding Title}" IsVisible="{Binding IsEditing}" Placeholder="Enter Book Title" />
+
+                            <!-- Метка для отображения названия книги (если не редактируется) -->
+                            <Label Grid.Row="0" Text="{Binding Title}" FontSize="18" FontAttributes="Bold" IsVisible="{Binding IsEditing, Converter={StaticResource InverseBooleanConverter}}" />
+
+                            <!-- Поле для ввода автора -->
+                            <Entry Grid.Row="1" Text="{Binding Author}" IsVisible="{Binding IsEditing}" Placeholder="Enter Author Name" />
+
+                            <!-- Метка для отображения автора (если не редактируется) -->
+                            <Label Grid.Row="1" Text="{Binding Author}" FontSize="14" IsVisible="{Binding IsEditing, Converter={StaticResource InverseBooleanConverter}}" />
+
+                            <!-- Поле для ввода ISBN -->
+                            <Entry Grid.Row="2" Text="{Binding ISBN}" IsVisible="{Binding IsEditing}" Placeholder="Enter ISBN" />
+
+                            <!-- Метка для отображения ISBN (если не редактируется) -->
+                            <Label Grid.Row="2" Text="{Binding ISBN}" FontSize="12" IsVisible="{Binding IsEditing, Converter={StaticResource InverseBooleanConverter}}" />
+                            <Button Grid.Row="3" 
+                            Text="Edit"
+                            IsVisible="{Binding !IsEditing, Converter={StaticResource InverseBooleanConverter}}"
+                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:BooksViewModel}}, Path=EditBookCommand}"
+                            CommandParameter="{Binding}" />
+                            <!-- Кнопка для сохранения изменений -->
+                            <Button Grid.Row="3" Text="Save" IsVisible="{Binding IsEditing}" Command="{Binding Source={RelativeSource AncestorType={x:Type vm:BooksViewModel}}, Path=SaveBookCommand}" CommandParameter="{Binding}" />
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </VerticalStackLayout>
+</ContentPage>
