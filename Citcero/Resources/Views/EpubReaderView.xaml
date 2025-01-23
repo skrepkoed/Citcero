@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Citcero.Resources.ViewModels"
+             x:Class="Citcero.Resources.Views.EpubReaderView"
+             Title="{Binding SelectedBook.Title}}">
+    
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Add Quote"
+             Command="{Binding AddQuoteCommand}" />
+    </ContentPage.ToolbarItems>
+    
+    
+    <ScrollView>
+    <VerticalStackLayout>
+        <Label 
+               FormattedText="{Binding CurrentPageContent}"
+               LineBreakMode="WordWrap"
+               FontSize="16" 
+               HorizontalOptions="CenterAndExpand" 
+               VerticalOptions="Start" 
+               Margin="50.0"
+               IsVisible="{Binding IsEditing, Converter={StaticResource InverseBooleanConverter}}"
+               />
+                <Editor Text="{Binding CurrentPageContent}"
+                       IsVisible="{Binding IsEditing}"
+                       x:Name="editor"
+                   FontSize="16" 
+                   HorizontalOptions="FillAndExpand" 
+                   VerticalOptions="FillAndExpand" 
+                   Margin="50.0"/>
+            
+            <StackLayout Orientation="Horizontal" HorizontalOptions="Center">
+                <Button Text="Previous" Command="{Binding PreviousPageCommand}" IsVisible="{Binding IsEditing, Converter={StaticResource InverseBooleanConverter}}" />
+                <Button Text="Next" Command="{Binding NextPageCommand}" IsVisible="{Binding IsEditing, Converter={StaticResource InverseBooleanConverter}}" />
+                <Button  Text="Save Quote" Clicked="OnButtonClicked"  IsVisible="{Binding IsEditing}" />
+                <Entry Text="{Binding CurrentPageNumber}"></Entry>
+        </StackLayout>
+    </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

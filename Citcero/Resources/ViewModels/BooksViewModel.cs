@@ -1,7 +1,10 @@
-﻿using Citcero.Resources.Models;
+﻿using Citcero.Resources.DbServices;
+using Citcero.Resources.Models;
 using Citcero.Resources.Services;
+using Citcero.Resources.Views;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -14,77 +17,98 @@ namespace Citcero.Resources.ViewModels
 {
     partial class BooksViewModel : ObservableObject
     {
+        private readonly ApplicationDbContext _dbContext;
         // Коллекция книг
         [ObservableProperty]
         public static ObservableCollection<Book> books = new();
+        [ObservableProperty]
+        public Book selectedBook;
 
-        // Команда для добавления книги
-        public ICommand AddBookCommand { get; }
-        public ICommand SaveBookCommand { get; }
-        public ICommand EditBookCommand { get; }
-        public ICommand AddBookFromPdfCommand { get; }
-
-        // Конструктор
-        public BooksViewModel()
+        public BooksViewModel(ApplicationDbContext dbContext)
         {
-            // Заполняем коллекцию книг для примера
-            if (Books.Count == 0)
-            {
-                Books.Add(new Book { Title = "1984", Author = "George Orwell", Isbn = "1234567890" });
-                Books.Add(new Book { Title = "To Kill a Mockingbird", Author = "Harper Lee", Isbn = "0987654321" });
-            }
-            // Инициализируем команду
-            AddBookCommand = new RelayCommand(AddBook);
-            SaveBookCommand = new RelayCommand<Book>(SaveBook);
-            EditBookCommand = new RelayCommand<Book>(EditBook);
-            AddBookFromPdfCommand = new AsyncRelayCommand(AddBookFromPdfAsync);
+            _dbContext = dbContext;
+            LoadBooks();
+        }
+
+        private void LoadBooks()
+        {
+            Books = new ObservableCollection<Book>(_dbContext.Books.ToList());
+        }
+
+        public void ResetSelectedBook()
+        {
+            SelectedBook = null;
+        }
+
+        partial void OnBooksChanged(ObservableCollection<Book> books)
+        {
+            Book.LoadBookCovers(Books);
         }
 
         // Метод для команды добавления книги
-        private void AddBook()
+        [RelayCommand]
+        public void AddBook()
         {
             Books.Add(new Book
             {
                 Title = string.Empty,
                 Author = string.Empty,
                 Isbn = string.Empty,
-                IsEditing = true // Включаем режим редактирования
+                IsEditing = true
             });
         }
-        private void SaveBook(Book book)
+        [RelayCommand]
+        public void SaveBook(Book book)
         {
-            // Сохраняем книгу и выключаем режим редактирования
-            if (book == null)
+            if (book.Id == 0)
             {
-                Console.WriteLine("Book is null!");
-                return;
+                _dbContext.Books.Add(book);
             }
+            else
+            {
+                _dbContext.Books.Update(book);
+            }
+
+            _dbContext.SaveChanges();
             book.IsEditing = false;
+            LoadBooks();
         }
-        private void EditBook(Book book)
+        [RelayCommand]
+        public void EditBook(Book book)
         {
             if (book == null) return;
 
-            book.IsEditing = true; // Включаем режим редактирования
+            book.IsEditing = true; 
         }
 
-        private async Task AddBookFromPdfAsync()
+
+        [RelayCommand]
+        public void DeleteBook(Book book)
+        {
+            if (book.Id != 0)
+            {
+                _dbContext.RemoveAllBookQuotes(book.Id);
+                _dbContext.Books.Remove(book);
+                _dbContext.SaveChanges();
+            }
+            
+            Books.Remove(book);
+        }
+
+        [RelayCommand]
+        private async Task AddBookFromEpubAsync()
         {
             try
             {
                 // Открываем диалоговое окно для выбора файла
-                var result = await FilePicker.PickAsync(new PickOptions
-                {
-                    PickerTitle = "Select a PDF file",
-                    FileTypes = FilePickerFileType.Pdf
-                });
+                var result = await EpubLoaderService.LoadEpubFromFile();
 
                 if (result == null) return; // Пользователь отменил выбор
 
                 var filePath = result.FullPath;
 
                 // Извлекаем метаданные PDF
-                var (title, author) = PdfMetadataReader.GetPdfMetadata(filePath);
+                var (title, author) = EpubLoaderService.GetEpubMetadata(filePath);
 
                 // Добавляем книгу в коллекцию
                 Books.Add(new Book
@@ -92,14 +116,34 @@ namespace Citcero.Resources.ViewModels
                     Title = title,
                     Author = author,
                     Isbn = string.Empty,
-                    IsEditing = false
+                    IsEditing = false,
+                    FilePath = filePath
                 });
+                SaveBook(Books.Last());
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error adding book from PDF: {ex.Message}");
-                await App.Current.MainPage.DisplayAlert("Error", "Failed to add book from PDF. Please try again.", "OK");
+                await App.Current.MainPage.DisplayAlert("Error", "Failed to add book from EPUB. Please try again.", "OK");
             }
+        }
+
+        [RelayCommand]
+        private async Task OpenEpubReaderView()
+        {
+            await Shell.Current.GoToAsync(nameof(EpubReaderView), true, new Dictionary<string, object>
+                {
+                    { "SelectedBook", SelectedBook }
+                }); ;
+            SelectedBook = null;
+
+        }
+        [RelayCommand]
+        private void OpenQuotesView(Book book)
+        {
+            Shell.Current.GoToAsync(nameof(QuotesView), true, new Dictionary<string, object>
+                {
+                    { "BookQuotes", book }
+                }); ;
         }
     }
 }

@@ -1,14 +1,21 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static System.Reflection.Metadata.BlobBuilder;
+using Citcero.Resources.Services;
 
 namespace Citcero.Resources.Models
 {
-    partial class Book : ObservableObject
+    public partial class Book : ObservableObject
     {
+        [Key]
+        public int Id { get; set; }
         [ObservableProperty]
         private string title;
 
@@ -19,13 +26,31 @@ namespace Citcero.Resources.Models
         private string isbn;
 
         [ObservableProperty]
-        private bool isEditing;
+        private string filePath;
 
-        //public string Publisher { get; set; }
-        //public string Language { get; set; }
-        //public string Description { get; set; }
-        //public string PageCount { get; set; }
-        //public string Thumbnail { get; set; }
-        //public string SmallThumbnail { get; set; }
+        private bool _isEditing;
+
+        [NotMapped]  
+        public bool IsEditing
+        {
+            get => _isEditing;
+            set => SetProperty(ref _isEditing, value);
+        }
+        public ICollection<Quote> Quotes { get; set; } = new List<Quote>();
+        [NotMapped]
+        public ImageSource? CoverImage { get; set; }
+        public Book()
+        {
+            _isEditing = false;
+        }
+
+        public static void LoadBookCovers(ObservableCollection<Book> books)
+        {
+            foreach (var book in books)
+            {
+                // Извлечение обложки книги
+                book.CoverImage = EpubPresentationService.GetBookCover(book);
+            }
+        }
     }
 }

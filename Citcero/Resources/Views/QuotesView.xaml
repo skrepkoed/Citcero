@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Citcero.Resources.ViewModels"
+             x:Class="Citcero.Resources.Views.QuotesView"
+             Title="QuotesView">
+    <ContentPage.BindingContext>
+        <vm:QuotesViewModel />
+    </ContentPage.BindingContext>
+    <Grid Padding="10" RowSpacing="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Заголовок страницы -->
+        <Label Text="Quotes"
+               FontSize="24"
+               FontAttributes="Bold"
+               HorizontalOptions="Center"
+               VerticalOptions="Center"
+               Grid.Row="0"
+               Margin="0,10,0,10" />
+
+        <!-- Список цитат -->
+        <CollectionView ItemsSource="{Binding Quotes}" Grid.Row="1">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Border  BackgroundColor="White"
+                           Padding="10"
+                           Margin="0,5">
+                        <Grid ColumnSpacing="10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Текст цитаты -->
+                            <Label Text="{Binding Text}"
+                                   FontSize="16"
+                                   LineBreakMode="WordWrap"
+                                   VerticalOptions="Center" />
+
+                            <!-- Кнопка для перехода на EpubReaderView -->
+                            <Button Text="Open"
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:QuotesViewModel}}, Path=OpenEpubReaderCommand}"
+                                    CommandParameter="{Binding}"
+                                    FontSize="14"
+                                    BackgroundColor="LightBlue"
+                                    TextColor="Black"
+                                    CornerRadius="5"
+                                    Padding="5,2"
+                                    Grid.Column="1" />
+                            <Button Text="Delete"
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:QuotesViewModel}}, Path=DeleteQuoteCommand}"
+                                    CommandParameter="{Binding}"
+                                    FontSize="14"
+                                    BackgroundColor="LightBlue"
+                                    TextColor="Black"
+                                    CornerRadius="5"
+                                    Padding="5,2"
+                                    Grid.Column="2" />
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </Grid>
+</ContentPage>
